@@ -115,3 +115,5 @@ logs/
 martin_fierro.txt
 mlruns
 data/
+.vscode/
+.*.sw*
