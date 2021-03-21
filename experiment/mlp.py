@@ -104,6 +104,18 @@ if __name__ == "__main__":
                         help="Number of epochs",
                         default=3,
                         type=int)
+    parser.add_argument("--batch-size",
+                        help="Batch size",
+                        default=128,
+                        type=int)
+    parser.add_argument("--learning-rate",
+                        help="Optimizer Learning Rate",
+                        default=1e-3,
+                        type=float)
+    parser.add_argument("--weight-decay",
+                        help="Optimizer weight decay",
+                        default=1e-5,
+                        type=float)
 
     args = parser.parse_args()
 
@@ -120,7 +132,7 @@ if __name__ == "__main__":
     )
     train_loader = DataLoader(
         train_dataset,
-        batch_size=128,  # This can be a hyperparameter
+        batch_size=args.batch_size,  # This can be a hyperparameter
         shuffle=False,
         collate_fn=pad_sequences,
         drop_last=False
@@ -134,7 +146,7 @@ if __name__ == "__main__":
         )
         validation_loader = DataLoader(
             validation_dataset,
-            batch_size=128,
+            batch_size=args.batch_size,
             shuffle=False,
             collate_fn=pad_sequences,
             drop_last=False
@@ -151,7 +163,7 @@ if __name__ == "__main__":
         )
         test_loader = DataLoader(
             test_dataset,
-            batch_size=128,
+            batch_size=args.batch_size,
             shuffle=False,
             collate_fn=pad_sequences,
             drop_last=False
@@ -171,7 +183,10 @@ if __name__ == "__main__":
             "hidden_layers": args.hidden_layers,
             "dropout": args.dropout,
             "embeddings_size": args.embeddings_size,
-            "epochs": args.epochs
+            "epochs": args.epochs,
+            "batch_size": args.batch_size,
+            "learning_rate": args.learning_rate,
+            "weight_decay": args.weight_decay
         })
         device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -189,8 +204,8 @@ if __name__ == "__main__":
         loss = nn.CrossEntropyLoss()
         optimizer = optim.Adam(
             model.parameters(),
-            lr=1e-3,  # This can be a hyperparameter
-            weight_decay=1e-5  # This can be a hyperparameter
+            lr=args.learning_rate,  # This can be a hyperparameter
+            weight_decay=args.weight_decay  # This can be a hyperparameter
         )
 
         logging.info("Training classifier")

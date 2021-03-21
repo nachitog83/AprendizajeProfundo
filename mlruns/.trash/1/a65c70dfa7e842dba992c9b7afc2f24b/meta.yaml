@@ -1,0 +1,15 @@
+artifact_uri: file:///users/igrosso/AprendizajeProfundo/mlruns/1/a65c70dfa7e842dba992c9b7afc2f24b/artifacts
+end_time: 1614985408513
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: active
+name: ''
+run_id: a65c70dfa7e842dba992c9b7afc2f24b
+run_uuid: a65c70dfa7e842dba992c9b7afc2f24b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1614984609260
+status: 3
+tags: []
+user_id: igrosso

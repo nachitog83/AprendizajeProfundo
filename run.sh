@@ -21,13 +21,38 @@ fi
 export CUDA_HOME=/opt/cuda/10.1
 export PATH=$CUDA_HOME/bin:$PATH
 export CUDA_VISIBLE_DEVICES=0
-
-python -m experiment.mlp \
-    --train-data ./data/meli-challenge-2019/spanish.train.jsonl.gz \
-    --token-to-index ./data/meli-challenge-2019/spanish_token_to_index.json.gz \
-    --pretrained-embeddings ./data/SBW-vectors-300-min5.txt.gz \
-    --language spanish \
-    --validation-data ./data/meli-challenge-2019/spanish.validation.jsonl.gz \
-    --embeddings-size 300 \
-    --hidden-layers 256 128 \
-    --dropout 0.3
+MOD=2
+if [ $MOD == 1 ]
+then
+    python -m experiment.mlp \
+        --train-data ./data/meli-challenge-2019/spanish.train.jsonl.gz \
+        --token-to-index ./data/meli-challenge-2019/spanish_token_to_index.json.gz \
+        --pretrained-embeddings ./data/SBW-vectors-300-min5.txt.gz \
+        --language spanish \
+        --validation-data ./data/meli-challenge-2019/spanish.validation.jsonl.gz \
+        --embeddings-size 300 \
+        --hidden-layers 512 256 128 \
+        --dropout 0.3 \
+        --epochs 3
+    #    --batch-size 256 \
+    #    --learning-rate 0.001 \
+    #    --weight-decay 0.005
+elif [ $MOD == 2 ]
+then
+    python -m experiment.rnn \
+        --train-data ./data/meli-challenge-2019/spanish.train.jsonl.gz \
+        --token-to-index ./data/meli-challenge-2019/spanish_token_to_index.json.gz \
+        --pretrained-embeddings ./data/SBW-vectors-300-min5.txt.gz \
+        --language spanish \
+        --validation-data ./data/meli-challenge-2019/spanish.validation.jsonl.gz \
+        --test-data ./data/meli-challenge-2019/spanish.test.jsonl.gz \
+        --embeddings-size 300 \
+        --hidden-layer 256 \
+        --num-layers 2 \
+        --dropout 0.2 \
+        --bidirectional True \
+        --epochs 5
+    #    --batch-size 256 \
+    #    --learning-rate 0.001 \
+    #    --weight-decay 0.005
+fi

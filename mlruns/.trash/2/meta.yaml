@@ -1,0 +1,4 @@
+artifact_location: file:///users/igrosso/AprendizajeProfundo/mlruns/2
+experiment_id: '2'
+lifecycle_stage: active
+name: a_naive_experiment_2
