@@ -21,7 +21,7 @@ fi
 export CUDA_HOME=/opt/cuda/10.1
 export PATH=$CUDA_HOME/bin:$PATH
 export CUDA_VISIBLE_DEVICES=0
-MOD=2
+MOD=3
 if [ $MOD == 1 ]
 then
     python -m experiment.mlp \
@@ -55,4 +55,23 @@ then
     #    --batch-size 256 \
     #    --learning-rate 0.001 \
     #    --weight-decay 0.005
+elif [ $MOD == 3 ]
+then
+    python -m experiment.cnn \
+    --train-data './data/meli-challenge-2019/spanish.train.jsonl.gz' \
+    --token-to-index './data/meli-challenge-2019/spanish_token_to_index.json.gz' \
+    --pretrained-embeddings './data/SBW-vectors-300-min5.txt.gz' \
+    --language 'spanish' \
+    --validation-data './data/meli-challenge-2019/spanish.validation.jsonl.gz' \
+    --test-data './data/meli-challenge-2019/spanish.test.jsonl.gz' \
+    --embeddings-size 300 \
+    --epochs 8 \
+    --batch-size 128 \
+    --random-buffer-size 2048 \
+    --freeze-embedings True \
+    --lr 1e-3 \
+    --weight-decay 1e-6 \
+    --filters-count 100 \
+    --filters-width 2 3 4 \
+    --dimensions 128
 fi

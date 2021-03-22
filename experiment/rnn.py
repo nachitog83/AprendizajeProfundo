@@ -189,7 +189,7 @@ if __name__ == "__main__":
         test_dataset = None
         test_loader = None
 
-    mlflow.set_experiment(f"diplodatos.{args.language}")
+    mlflow.set_experiment(f"diplodatos.{args.language}.RNN")
 
     with mlflow.start_run():
         logging.info("Starting experiment")

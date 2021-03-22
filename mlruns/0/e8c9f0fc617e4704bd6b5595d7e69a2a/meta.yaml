@@ -2,7 +2,7 @@ artifact_uri: file:///users/igrosso/AprendizajeProfundo/mlruns/0/e8c9f0fc617e470
 end_time: 1616194880321
 entry_point_name: ''
 experiment_id: '0'
-lifecycle_stage: active
+lifecycle_stage: deleted
 name: ''
 run_id: e8c9f0fc617e4704bd6b5595d7e69a2a
 run_uuid: e8c9f0fc617e4704bd6b5595d7e69a2a

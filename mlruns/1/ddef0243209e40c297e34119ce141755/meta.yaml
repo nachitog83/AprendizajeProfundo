@@ -1,0 +1,15 @@
+artifact_uri: file:///content/mlruns/1/ddef0243209e40c297e34119ce141755/artifacts
+end_time: 1616374700860
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: deleted
+name: ''
+run_id: ddef0243209e40c297e34119ce141755
+run_uuid: ddef0243209e40c297e34119ce141755
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1616374700818
+status: 4
+tags: []
+user_id: igrosso

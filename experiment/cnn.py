@@ -21,16 +21,17 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-
-class MLPClassifier(nn.Module):
+class CNNClassifier(nn.Module):
     def __init__(self,
                  pretrained_embeddings_path,
                  token_to_index,
                  n_labels,
-                 hidden_layers=[256, 128],
-                 dropout=0.3,
                  vector_size=300,
+                 filters_count=100,      ###### FEATURES LERNERS
+                 filters_width=[2,3,4], ###### WORDS PER CONVOLUTION
+                 dimensions=128,
                  freeze_embedings=True):
+
         super().__init__()
         with gzip.open(token_to_index, "rt") as fh:
             token_to_index = json.load(fh)
@@ -43,29 +44,34 @@ class MLPClassifier(nn.Module):
                 if word in token_to_index:
                     embeddings_matrix[token_to_index[word]] =\
                         torch.FloatTensor([float(n) for n in vector.split()])
+
         self.embeddings = nn.Embedding.from_pretrained(embeddings_matrix,
                                                        freeze=freeze_embedings,
                                                        padding_idx=0)
-        self.hidden_layers = [
-            nn.Linear(vector_size, hidden_layers[0])
-        ]
-        for input_size, output_size in zip(hidden_layers[:-1], hidden_layers[1:]):
-            self.hidden_layers.append(
-                nn.Linear(input_size, output_size)
+        self.convs = []
+        for filter in filters_width:
+            self.convs.append(
+                nn.Conv1d(vector_size, filters_count, filter)
             )
-        self.dropout = dropout
-        self.hidden_layers = nn.ModuleList(self.hidden_layers)
-        self.output = nn.Linear(hidden_layers[-1], n_labels)
-        self.vector_size = vector_size
 
+        self.convs = nn.ModuleList(self.convs)
+        self.fc = nn.Linear(filters_count * len(filters_width), dimensions)
+        self.output = nn.Linear(dimensions, n_labels)
+        self.vector_size = vector_size
+        self.filters_count = filters_count
+        self.filters_width = filters_width
+        self.dimensions=dimensions
+   
+    @staticmethod
+    def conv_global_max_pool(x, conv):
+        return F.relu(conv(x).transpose(1, 2).max(1)[0])
+    
     def forward(self, x):
-        x = self.embeddings(x)
-        x = torch.mean(x, dim=1)
-        for layer in self.hidden_layers:
-            x = F.relu(layer(x))
-            if self.dropout:
-                x = F.dropout(x, self.dropout)
-        x = self.output(x)
+        x = self.embeddings(x).transpose(1, 2)  # Conv1d takes (batch, channel, seq_len)
+        x = [self.conv_global_max_pool(x, conv) for conv in self.convs]
+        x = torch.cat(x, dim=1)
+        x = F.relu(self.fc(x))
+        x = self.output(x) # Softmax is applied in Cross Entropy Loss
         return x
 
 
@@ -91,15 +97,6 @@ if __name__ == "__main__":
                         default=300,
                         help="Size of the vectors.",
                         type=int)
-    parser.add_argument("--hidden-layers",
-                        help="Sizes of the hidden layers of the MLP (can be one or more values)",
-                        nargs="+",
-                        default=[256, 128],
-                        type=int)
-    parser.add_argument("--dropout",
-                        help="Dropout to apply to each hidden layer",
-                        default=0.3,
-                        type=float)
     parser.add_argument("--epochs",
                         help="Number of epochs",
                         default=3,
@@ -108,20 +105,43 @@ if __name__ == "__main__":
                         help="Batch size",
                         default=128,
                         type=int)
-    parser.add_argument("--learning-rate",
-                        help="Optimizer Learning Rate",
+    parser.add_argument("--random-buffer-size",
+                        help="Random buffer size",
+                        default=2048,
+                        type=int)
+    parser.add_argument("--freeze-embedings",
+                        help="Freeze embeddings?",
+                        default=True)
+    parser.add_argument("--lr",
+                        help="Learning Rate regularization",
                         default=1e-3,
                         type=float)
     parser.add_argument("--weight-decay",
-                        help="Optimizer weight decay",
+                        help="Weight Decay",
                         default=1e-5,
                         type=float)
+    parser.add_argument("--filters-count",
+                        help="Number of filters (feature lerners)",
+                        default=100,
+                        type=int)
+    parser.add_argument("--filters-width",
+                        help="Filters width (words per convolution)",
+                        nargs="+",
+                        default=[2, 3, 4],
+                        type=int)
+    parser.add_argument("--dimensions",
+                        help="Number of Layer's dimensions",
+                        default=128,
+                        type=int)
 
     args = parser.parse_args()
 
+    assert args.batch_size > 0
+    assert args.random_buffer_size > 0
+
     pad_sequences = PadSequences(
         pad_value=0,
-        max_length=None,
+        max_length=max(args.filters_width),
         min_length=1
     )
 
@@ -172,41 +192,47 @@ if __name__ == "__main__":
         test_dataset = None
         test_loader = None
 
-    mlflow.set_experiment(f"diplodatos.{args.language}.MLP")
+    mlflow.set_experiment(f"diplodatos.{args.language}.CNN")
 
     with mlflow.start_run():
         logging.info("Starting experiment")
         # Log all relevent hyperparameters
         mlflow.log_params({
-            "model_type": "Multilayer Perceptron",
+            "model_type": "Convolutional Neural Network",
             "embeddings": args.pretrained_embeddings,
-            "hidden_layers": args.hidden_layers,
-            "dropout": args.dropout,
             "embeddings_size": args.embeddings_size,
             "epochs": args.epochs,
             "batch_size": args.batch_size,
-            "learning_rate": args.learning_rate,
-            "weight_decay": args.weight_decay
+            "random_buffer_size": args.random_buffer_size,
+            "freeze_embedings": args.freeze_embedings,
+            "lr": args.lr,
+            "weight_decay": args.weight_decay,
+            "filters_count": args.filters_count,
+            "filters_width": args.filters_width,
+            "dimensions": args.dimensions
         })
         device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
         logging.info("Building classifier")
-        model = MLPClassifier(
+        model = CNNClassifier(
             pretrained_embeddings_path=args.pretrained_embeddings,
             token_to_index=args.token_to_index,
             n_labels=train_dataset.n_labels,
-            hidden_layers=args.hidden_layers,
-            dropout=args.dropout,
             vector_size=args.embeddings_size,
-            freeze_embedings=True  # This can be a hyperparameter
+            freeze_embedings=args.freeze_embedings,
+            filters_count=args.filters_count,
+            filters_width=args.filters_width,
+            dimensions=args.dimensions
         )
         model = model.to(device)
-        loss = nn.CrossEntropyLoss()
+        loss = nn.CrossEntropyLoss() ### Applies softmax()
         optimizer = optim.Adam(
             model.parameters(),
-            lr=args.learning_rate,  # This can be a hyperparameter
-            weight_decay=args.weight_decay  # This can be a hyperparameter
+            lr=args.lr,
+            weight_decay=args.weight_decay
         )
+        logging.info(model)
+        logging.info(loss)
+        logging.info(optimizer)
 
         logging.info("Training classifier")
         for epoch in trange(args.epochs):
