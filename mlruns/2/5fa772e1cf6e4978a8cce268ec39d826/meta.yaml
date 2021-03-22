@@ -1,5 +1,5 @@
 artifact_uri: file:///content/mlruns/2/5fa772e1cf6e4978a8cce268ec39d826/artifacts
-end_time: null
+end_time: 1616387353741
 entry_point_name: ''
 experiment_id: '2'
 lifecycle_stage: active
@@ -10,6 +10,6 @@ source_name: ''
 source_type: 4
 source_version: ''
 start_time: 1616384260889
-status: 1
+status: 3
 tags: []
 user_id: igrosso
